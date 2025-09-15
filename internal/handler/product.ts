@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { CreateProductDTO, ProductDTO, UpdateProductDTO } from "../dto/product";
 import z from "zod";
+import { MultipartFile } from "@fastify/multipart";
 
 interface IProductService {
 
@@ -77,26 +78,62 @@ async function GetProductById(request: FastifyRequest, reply: FastifyReply) {
 }
 
 async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
+    const file: MultipartFile | undefined = await request.file()
+
+    if (!file) {
+        return reply.code(500).send({
+            message: "something went wrong",
+            body: null
+        })
+    }
+
+    const fileData = file.fields as Record<string, { value: string }>
+    const payload = {
+        sku: fileData.sku?.value,
+        title: fileData.title?.value,
+        price: Number(fileData.price?.value),
+        description: fileData.description?.value,
+        image: file
+    }
+
     const val = z.object({
         title: z.string("Title should be string").min(1, "Title is required"),
         sku: z.string("SKU should be string").min(1, "Title is required"),
         price: z.number("Price should be number"),
-        description: z.string("Description should be string").min(1, "Title is required")
-    }).safeParse(request.body ?? {})
+        description: z.string("Description should be string").min(1, "Title is required"),
+        image: z.custom<MultipartFile>((file) => {
+            console.log(file)
+            if (!file) return false;
+
+            // Cek size
+            if (file.file.bytesRead > 2 * 1024 * 1024) {
+                return false;
+            }
+
+            // Cek mimetype
+            if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
+                return false;
+            }
+
+            return true;
+        }, {
+            message: "File must be JPG/PNG and smaller than 2MB"
+        })
+    }).safeParse(payload ?? {})
+
+    const data: CreateProductDTO = {
+        sku: payload.sku,
+        title: payload.title,
+        price: Number(payload.price),
+        description: payload.description,
+        file_image: file
+    }
 
     if (!val.success) {
         return reply.code(400).send({
             message: "validation failed",
             body: val.error.flatten().fieldErrors
         })
-    }
-
-    const payload = request.body as CreateProductDTO
-    const data: CreateProductDTO = {
-        sku: payload.sku,
-        title: payload.title,
-        price: payload.price,
-        description: payload.description,
     }
 
     try {
@@ -130,12 +167,47 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
         })
     }
 
+    const file: MultipartFile | undefined = await request.file()
+
+    if (!file) {
+        return reply.code(500).send({
+            message: "something went wrong",
+            body: null
+        })
+    }
+
+    const fileData = file.fields as Record<string, { value: string }>
+    const payload = {
+        sku: fileData.sku?.value,
+        title: fileData.title?.value,
+        price: Number(fileData.price?.value),
+        description: fileData.description?.value,
+        image: file
+    }
+
     const val = z.object({
         title: z.string("Title should be string").min(1, "Title is required").optional(),
         sku: z.string("SKU should be string").min(1, "Title is required").optional(),
         price: z.number("Price should be number").optional(),
-        description: z.string("Description should be string").min(1, "Title is required").optional()
-    }).safeParse(request.body ?? {})
+        description: z.string("Description should be string").min(1, "Title is required").optional(),
+        image: z.custom<MultipartFile>((file) => {
+            if (!file) return false;
+
+            // Cek size
+            if (file.file.bytesRead > 2 * 1024 * 1024) {
+            return false;
+            }
+
+            // Cek mimetype
+            if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
+            return false;
+            }
+
+            return true;
+        }, {
+            message: "File must be JPG/PNG and smaller than 2MB"
+        }).optional()
+    }).safeParse(fileData ?? {})
 
     if (!val.success) {
         return reply.code(400).send({
@@ -143,13 +215,13 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
             body: val.error.flatten().fieldErrors
         })
     }
-
-    const payload = request.body as UpdateProductDTO
+    
     const data: UpdateProductDTO = {
         sku: payload.sku,
         title: payload.title,
         price: payload.price,
         description: payload.description,
+        file_image: file
     }
 
     try {

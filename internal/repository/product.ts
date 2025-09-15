@@ -34,9 +34,9 @@ export default class ProductRepository {
     async create(data: CreateProductDTO) : Promise<ProductModel> {
         const db = getDB()
         const row = await db.one(`
-            INSERT INTO products(title, sku, price, description)
-            VALUES($1, $2, $3, $4) RETURNING *
-        `, [data.title, data.sku, data.price, data.description]);
+            INSERT INTO products(title, sku, price, description, image)
+            VALUES($1, $2, $3, $4, $5) RETURNING *
+        `, [data.title, data.sku, data.price, data.description, data.image]);
 
         return new ProductModel(row);
     }
@@ -49,10 +49,11 @@ export default class ProductRepository {
                 price = COALESCE($3, price),
                 description = COALESCE($4, description),
                 sku = COALESCE($5, sku),
+                image = COALESCE($6, image),
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-        `, [id, data.title, data.price, data.description, data.sku]);
+        `, [id, data.title, data.price, data.description, data.sku, data.image]);
 
         return new ProductModel(row);
     }

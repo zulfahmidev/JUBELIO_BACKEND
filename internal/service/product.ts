@@ -1,5 +1,10 @@
+import { randomUUID } from "crypto"
 import { CreateProductDTO, ProductDTO, toProductDTO, UpdateProductDTO } from "../dto/product"
 import ProductModel from "../model/product"
+import { Multipart } from "@fastify/multipart"
+import path from "path"
+import { promises } from "fs"
+import UploadFile from "../../pkg/upload/upload"
 
 interface IProductRepository {
 
@@ -27,7 +32,7 @@ export default class ProductService {
 
     async getProduct(id: number) : Promise<ProductDTO | null> {
         const product: ProductModel | null = await this.productRepository.findOne(id)
-
+        
         return product ? toProductDTO(product) : null
     }
 
@@ -50,6 +55,15 @@ export default class ProductService {
             throw new Error("SKU already exists")
         }
 
+        if (data.file_image) {
+            const image = await UploadFile(data.file_image)
+            if (!image) {
+                throw new Error('failed to upload file')
+            }
+
+            data.image = image
+        }
+
         const product: ProductModel = await this.productRepository.create(data)
 
         return product != null
@@ -62,6 +76,15 @@ export default class ProductService {
             if (await this.productRepository.findOneBySKU(data.sku) != null) {
                 throw new Error("SKU already exists")
             }
+        }
+
+        if (data.file_image) {
+            const image = await UploadFile(data.file_image)
+            if (!image) {
+                throw new Error('failed to upload file')
+            }
+
+            data.image = image
         }
         
         const product: ProductModel = await this.productRepository.update(id, data)

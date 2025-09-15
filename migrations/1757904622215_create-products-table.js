@@ -10,6 +10,7 @@ export const up = (pgm) => {
     pgm.createTable("products", {
         id: "id",
         title: { type: 'varchar(100)', notNull: true },
+        image: { type: 'varchar(255)', notNull: true },
         sku: { type: 'varchar(50)', unique: true, notNull: true },
         price: { type: 'int', notNull: true, default: 0 },
         description: { type: 'text', notNull: true, default: "" },
