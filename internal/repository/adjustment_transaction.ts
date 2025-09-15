@@ -4,7 +4,7 @@ import AdjustmentTransactionModel from "../model/adjustment_transaction";
 
 export default class AdjustmentTransactionRepository {
 
-    async findOne(id: string) : Promise<AdjustmentTransactionModel | null> {
+    async findOne(id: number) : Promise<AdjustmentTransactionModel | null> {
         const db = getDB()
         const row = await db.oneOrNone(`
             SELECT * FROM adjustment_transactions WHERE id = $1
@@ -39,6 +39,7 @@ export default class AdjustmentTransactionRepository {
             SET sku = COALESCE($2, sku),
                 qty = COALESCE($3, qty),
                 amount = COALESCE($4, qty),
+                updated_at = NOW()
             WHERE id = $1
             RETURNING *
         `, [id, data.sku, data.qty, data.amount]);
@@ -46,7 +47,7 @@ export default class AdjustmentTransactionRepository {
         return new AdjustmentTransactionModel(row);
     }
 
-    async delete(id: number) {
+    async delete(id: number) : Promise<boolean> {
         const db = getDB();
         const result = await db.result(
             `DELETE FROM adjustment_transactions WHERE id = $1`,

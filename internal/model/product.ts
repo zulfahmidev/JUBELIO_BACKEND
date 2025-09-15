@@ -4,24 +4,24 @@ export default class ProductModel {
     public sku: string
     public price: number
     public description: string
-    public createdAt: Date
-    public updateddAt: Date
+    public created_at: Date
+    public updatedd_at: Date
 
-    constructor({ id, title, sku, price, description, createdAt, updateddAt }: {
+    constructor({ id, title, sku, price, description, created_at, updatedd_at }: {
         id: number,
         title: string,
         sku: string,
         price: number,
         description: string,
-        createdAt: Date,
-        updateddAt: Date,
+        created_at: Date,
+        updatedd_at: Date,
     }) {
         this.id = id
         this.title = title
         this.sku = sku
         this.price = price
         this.description = description
-        this.createdAt = createdAt
-        this.updateddAt = updateddAt
+        this.created_at = created_at
+        this.updatedd_at = updatedd_at
     }
 }

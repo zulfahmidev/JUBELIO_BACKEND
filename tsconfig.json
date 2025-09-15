@@ -6,6 +6,6 @@
     "strict": true,
     "outDir": "dist"
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "migration.config.ts"]
 }
 

@@ -14,6 +14,8 @@ export const up = (pgm) => {
         sku: { type: 'varchar(50)', notNull: true },
         qty: { type: 'int', notNull: true, default: 0 },
         amount: { type: 'int', notNull: true, default: 0 },
+        created_at: { type: 'timestamptz', notNull: true, default: pgm.func('NOW()') },
+        updated_at: { type: 'timestamptz', notNull: true, default: pgm.func('NOW()') },
     })
 };
 
