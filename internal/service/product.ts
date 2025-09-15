@@ -31,7 +31,7 @@ export default class ProductService {
         return product ? toProductDTO(product) : null
     }
 
-    async getListProduct() : Promise<ProductDTO[] | null> {
+    async getListProduct() : Promise<ProductDTO[]> {
         const products: ProductModel[] = await this.productRepository.findAll()
 
         return products.map(v => toProductDTO(v))

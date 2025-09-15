@@ -6,7 +6,7 @@ export interface IProductService {
 
     getProduct(id: number) : Promise<ProductDTO | null>
 
-    getListProduct() : Promise<ProductDTO[] | null>
+    getListProduct() : Promise<ProductDTO[]>
 
     createProduct(data: CreateProductDTO) : Promise<boolean>
 
@@ -23,10 +23,57 @@ export default function ProductHandler(
     ) : FastifyInstance {
 
     productService = ps
+    app.get("/product/:product_id", GetProductById)
+    app.get("/product", GetListProduct)
     app.post("/product", CreateProduct)
     app.patch("/product/:product_id", UpdateProduct)
+    app.delete("/product/:product_id", DeleteProduct)
 
     return app
+}
+
+async function GetListProduct(request: FastifyRequest, reply: FastifyReply) {
+    try {
+        const products: ProductDTO[] = await productService.getListProduct()
+
+        return reply.code(200).send({
+            message: "products loaded",
+            body: products
+        })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(error)
+        return reply.code(500).send({
+            message: message,
+            body: null
+        })
+    }
+}
+
+async function GetProductById(request: FastifyRequest, reply: FastifyReply) {
+    try {
+        const {product_id} = request.params as {product_id: number}
+
+        const product = await productService.getProduct(product_id)
+        if (!product) {
+            return reply.code(404).send({
+                message: "Product not found",
+                body: null
+            })
+        }
+
+        return reply.code(200).send({
+            message: "product loaded",
+            body: product
+        })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(error)
+        return reply.code(500).send({
+            message: message,
+            body: null
+        })
+    }
 }
 
 async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
@@ -59,7 +106,7 @@ async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
         }
 
         return reply.code(201).send({
-            message: "created product",
+            message: "product created",
             body: null
         })
     } catch (error: unknown) {
@@ -111,8 +158,39 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
             throw new Error('something went wrong')
         }
 
-        return reply.code(201).send({
-            message: "updated product",
+        return reply.code(200).send({
+            message: "product updated",
+            body: null
+        })
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(error)
+        return reply.code(500).send({
+            message: message,
+            body: null
+        })
+    }
+}
+
+async function DeleteProduct(request: FastifyRequest, reply: FastifyReply) {
+    const {product_id} = request.params as {product_id: number}
+
+    const product = await productService.getProduct(product_id)
+    if (!product) {
+        return reply.code(404).send({
+            message: "Product not found",
+            body: null
+        })
+    }
+
+    try {
+        const result = await productService.deleteProduct(product_id)
+        if (!result) {
+            throw new Error('something went wrong')
+        }
+
+        return reply.code(200).send({
+            message: "product deleted",
             body: null
         })
     } catch (error: unknown) {
