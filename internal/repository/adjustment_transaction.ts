@@ -38,7 +38,7 @@ export default class AdjustmentTransactionRepository {
             UPDATE adjustment_transactions
             SET sku = COALESCE($2, sku),
                 qty = COALESCE($3, qty),
-                amount = COALESCE($4, qty),
+                amount = COALESCE($4, amount),
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *

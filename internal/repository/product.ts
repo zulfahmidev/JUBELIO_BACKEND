@@ -45,20 +45,14 @@ export default class ProductRepository {
         const db = getDB()
         const row = await db.one(`
             UPDATE products
-            SET title = COALESCE($(title), title),
-                price = COALESCE($(price), price),
-                description = COALESCE($(description), description),
-                sku = COALESCE($(sku), sku),
+            SET title = COALESCE($2, title),
+                price = COALESCE($3, price),
+                description = COALESCE($4, description),
+                sku = COALESCE($5, sku),
                 updated_at = NOW()
-            WHERE id = $(id)
+            WHERE id = $1
             RETURNING *
-        `, {
-            id: id, 
-            title: data.title, 
-            price: data.price, 
-            description: data.description, 
-            sku: data.sku
-        });
+        `, [id, data.title, data.price, data.description, data.sku]);
 
         return new ProductModel(row);
     }

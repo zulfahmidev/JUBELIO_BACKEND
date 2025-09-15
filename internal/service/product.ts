@@ -1,7 +1,7 @@
 import { CreateProductDTO, ProductDTO, toProductDTO, UpdateProductDTO } from "../dto/product"
 import ProductModel from "../model/product"
 
-export interface IProductRepository {
+interface IProductRepository {
 
     findOne(id: number) : Promise<ProductModel | null> 
 
@@ -27,6 +27,12 @@ export default class ProductService {
 
     async getProduct(id: number) : Promise<ProductDTO | null> {
         const product: ProductModel | null = await this.productRepository.findOne(id)
+
+        return product ? toProductDTO(product) : null
+    }
+
+    async getProductBySKU(sku: string) : Promise<ProductDTO | null> {
+        const product: ProductModel | null = await this.productRepository.findOneBySKU(sku)
 
         return product ? toProductDTO(product) : null
     }

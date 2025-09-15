@@ -17,8 +17,8 @@ export default function InitDependencies(app: FastifyInstance) : FastifyInstance
     const productService = new ProductService(productRepository)
 
     // Handlers
-    app = AdjustmentTransactionHandler(app, adjustmentTransactionService)
     app = ProductHandler(app, productService)
+    app = AdjustmentTransactionHandler(app, adjustmentTransactionService, productService)
 
     return app
 }

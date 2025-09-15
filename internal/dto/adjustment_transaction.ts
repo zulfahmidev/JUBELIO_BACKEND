@@ -1,8 +1,21 @@
+import AdjustmentTransactionModel from "../model/adjustment_transaction";
+
 export interface AdjustmentTransactionDTO {
     id: number,
     sku: string,
     qty: number,
     amount: number,
+    created_at: Date
+}
+
+export function toAdjustmentTransactionDTO(data: AdjustmentTransactionModel) : AdjustmentTransactionDTO {
+    return {
+        id: data.id,
+        sku: data.sku,
+        qty: data.qty,
+        amount: data.amount,
+        created_at: data.created_at
+    }
 }
 
 export interface CreateAdjustmentTransactionDTO {

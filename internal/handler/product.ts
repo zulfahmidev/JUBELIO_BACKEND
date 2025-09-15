@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { CreateProductDTO, ProductDTO, UpdateProductDTO } from "../dto/product";
 import z from "zod";
 
-export interface IProductService {
+interface IProductService {
 
     getProduct(id: number) : Promise<ProductDTO | null>
 
@@ -18,13 +18,13 @@ export interface IProductService {
 let productService: IProductService;
 
 export default function ProductHandler(
-        app: FastifyInstance, 
-        ps: IProductService
-    ) : FastifyInstance {
+    app: FastifyInstance, 
+    ps: IProductService
+) : FastifyInstance {
 
     productService = ps
-    app.get("/product/:product_id", GetProductById)
     app.get("/product", GetListProduct)
+    app.get("/product/:product_id", GetProductById)
     app.post("/product", CreateProduct)
     app.patch("/product/:product_id", UpdateProduct)
     app.delete("/product/:product_id", DeleteProduct)
