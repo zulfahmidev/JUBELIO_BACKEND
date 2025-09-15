@@ -1,11 +1,11 @@
-import { AdjustmentTransactionDTO, CreateAdjustmentTransactionDTO, toAdjustmentTransactionDTO, UpdateAdjustmentTransactionDTO } from "../dto/adjustment_transaction"
+import { AdjustmentTransactionDTO, CreateAdjustmentTransactionDTO, GetListAdjustmentTransactionDTO, toAdjustmentTransactionDTO, UpdateAdjustmentTransactionDTO } from "../dto/adjustment_transaction"
 import AdjustmentTransactionModel from "../model/adjustment_transaction"
 
 interface IAdjustmentTransactionRepository {
 
     findOne(id: number) : Promise<AdjustmentTransactionModel | null> 
 
-    findAll() : Promise<AdjustmentTransactionModel[]> 
+    findAll(filter: GetListAdjustmentTransactionDTO) : Promise<{items: AdjustmentTransactionModel[], count: number}> 
 
     create(data: CreateAdjustmentTransactionDTO) : Promise<AdjustmentTransactionModel> 
 
@@ -29,10 +29,12 @@ export default class AdjustmentTransactionService {
         return adjustmentTransaction ? toAdjustmentTransactionDTO(adjustmentTransaction) : null
     }
 
-    async getListAdjustmentTransaction() : Promise<AdjustmentTransactionDTO[]> {
-        const adjustmentTransactions: AdjustmentTransactionModel[] = await this.adjustmentTransactionRepository.findAll()
+    async getListAdjustmentTransaction(filter: GetListAdjustmentTransactionDTO) : Promise<{items: AdjustmentTransactionDTO[], count: number}> {
+        const {items, count}: {items: AdjustmentTransactionModel[], count: number} = await this.adjustmentTransactionRepository.findAll(filter)
 
-        return adjustmentTransactions.map(v => toAdjustmentTransactionDTO(v))
+        return {
+            items: items.map(v => toAdjustmentTransactionDTO(v)), count
+        }
     }
 
     async createAdjustmentTransaction(data: CreateAdjustmentTransactionDTO) : Promise<boolean> {

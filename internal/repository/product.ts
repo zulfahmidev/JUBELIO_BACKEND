@@ -1,11 +1,13 @@
 import { getDB } from "../../pkg/database/database";
-import type { CreateProductDTO, UpdateProductDTO } from "../dto/product";
+import { Pagination } from "../../pkg/rest/pagination";
+import type { CreateProductDTO, GetListProductDTO, UpdateProductDTO } from "../dto/product";
 import ProductModel from "../model/product";
 
 export default class ProductRepository {
 
-    async findOne(id: number) : Promise<ProductModel | null> {
+    async findOne(id: number): Promise<ProductModel | null> {
         const db = getDB()
+
         const row = await db.oneOrNone(`
             SELECT * FROM products WHERE id = $1
         `, id)
@@ -13,7 +15,7 @@ export default class ProductRepository {
         return row ? new ProductModel(row) : null
     }
 
-    async findOneBySKU(sku: string) : Promise<ProductModel | null> {
+    async findOneBySKU(sku: string): Promise<ProductModel | null> {
         const db = getDB()
         const row = await db.oneOrNone(`
             SELECT * FROM products WHERE sku = $1
@@ -22,16 +24,43 @@ export default class ProductRepository {
         return row ? new ProductModel(row) : null
     }
 
-    async findAll() : Promise<ProductModel[]> {
-        const db = getDB()
-        const rows: ProductModel[] = await db.any(`
-            SELECT * FROM products
-        `)
+    async findAll(filter: GetListProductDTO): Promise<{ items: ProductModel[]; count: number }> {
+        const db = getDB();
+        const pg = new Pagination(filter);
 
-        return rows.map(row => new ProductModel(row))
+        const searchSql = `
+            (title ILIKE '%$(search:value)%' OR sku ILIKE '%$(search:value)%')
+        `;
+
+        const countRow = await db.one(`
+            SELECT COUNT(*) AS total
+            FROM products
+            WHERE ${searchSql}
+        `, { search: pg.search } );
+
+        const count = parseInt(countRow.total, 10);
+
+        const rows = await db.any(`
+            SELECT *
+            FROM products
+            WHERE ${searchSql}
+            ORDER BY $(order:raw) $(sort:raw)
+            OFFSET $(offset) LIMIT $(limit)
+        `, {
+            search: pg.search,
+            offset: pg.getOffset(),
+            limit: pg.limit,
+            order: pg.order,
+            sort: pg.sort,
+        });
+
+        return {
+            items: rows.map((row: any) => new ProductModel(row)),
+            count,
+        };
     }
 
-    async create(data: CreateProductDTO) : Promise<ProductModel> {
+    async create(data: CreateProductDTO): Promise<ProductModel> {
         const db = getDB()
         const row = await db.one(`
             INSERT INTO products(title, sku, price, description, image)
@@ -41,7 +70,7 @@ export default class ProductRepository {
         return new ProductModel(row);
     }
 
-    async update(id: number, data: UpdateProductDTO) : Promise<ProductModel> {
+    async update(id: number, data: UpdateProductDTO): Promise<ProductModel> {
         const db = getDB()
         const row = await db.one(`
             UPDATE products
@@ -58,7 +87,7 @@ export default class ProductRepository {
         return new ProductModel(row);
     }
 
-    async delete(id: number) : Promise<boolean> {
+    async delete(id: number): Promise<boolean> {
         const db = getDB();
         const result = await db.result(
             `DELETE FROM products WHERE id = $1`,

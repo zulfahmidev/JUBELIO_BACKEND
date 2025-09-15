@@ -23,6 +23,14 @@ export function toProductDTO(data: ProductModel) : ProductDTO {
     }
 }
 
+export interface GetListProductDTO {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort?: "ASC" | "DESC";
+    order?: string;
+}
+
 export interface CreateProductDTO {
     title: string,
     sku: string,

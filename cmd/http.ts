@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 import { connectDB } from '../pkg/database/database';
 import multipart from "@fastify/multipart";
 
-const app = Fastify({
+export const app = Fastify({
     logger: true
 })
 

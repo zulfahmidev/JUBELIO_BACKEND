@@ -5,14 +5,7 @@ import pg from 'pg-promise/typescript/pg-subset';
 let database: pgp.IDatabase<{}, pg.IClient>;
 
 export async function connectDB(app: FastifyInstance) {
-    const user = process.env.DB_USER
-    const port = process.env.DB_PORT
-    const name = process.env.DB_NAME
-    const host = process.env.DB_HOST
-    const pass = process.env.DB_PASS
-    
-    const cn = `postgres://${user}:${pass}@${host}:${port}/${name}`;
-    let db = pgp({})(cn);
+    let db = pgp({})(process.env.DATABASE_URL ?? '');
     try {
         await db.connect()
         database = db

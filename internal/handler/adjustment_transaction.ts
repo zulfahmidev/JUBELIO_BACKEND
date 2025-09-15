@@ -1,12 +1,13 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { AdjustmentTransactionDTO, CreateAdjustmentTransactionDTO, UpdateAdjustmentTransactionDTO } from "../dto/adjustment_transaction";
+import { AdjustmentTransactionDTO, CreateAdjustmentTransactionDTO, GetListAdjustmentTransactionDTO, UpdateAdjustmentTransactionDTO } from "../dto/adjustment_transaction";
 import { ProductDTO } from "../dto/product";
 import z from "zod";
+import { PaginationResponse } from "../../pkg/rest/pagination";
 
 interface IAdjustmentTransactionService {
     getAdjustmentTransaction(id: number) : Promise<AdjustmentTransactionDTO | null>
 
-    getListAdjustmentTransaction() : Promise<AdjustmentTransactionDTO[]>
+    getListAdjustmentTransaction(filter: GetListAdjustmentTransactionDTO) : Promise<{items: AdjustmentTransactionDTO[], count: number}>
 
     createAdjustmentTransaction(data: CreateAdjustmentTransactionDTO) : Promise<boolean>
 
@@ -41,11 +42,15 @@ export default function AdjustmentTransactionHandler(
 
 async function GetListAdjustmentTransaction(request: FastifyRequest, reply: FastifyReply) {
     try {
-        const adjustmentTransactions: AdjustmentTransactionDTO[] = await adjustmentTransactionService.getListAdjustmentTransaction()
+        const filter = request.query as GetListAdjustmentTransactionDTO
+        const {items, count}: {items: AdjustmentTransactionDTO[], count: number} = await adjustmentTransactionService.getListAdjustmentTransaction(filter)
 
         return reply.code(200).send({
             message: "adjustment transactions loaded",
-            body: adjustmentTransactions
+            body: {
+                items: items,
+                pagination: new PaginationResponse(count, Math.ceil(count/(filter.limit ?? 10)), Number(filter.page ?? 1), Number(filter.limit ?? 10))
+            }
         })
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);

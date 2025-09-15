@@ -1,19 +1,22 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { CreateProductDTO, ProductDTO, UpdateProductDTO } from "../dto/product";
+import { CreateProductDTO, GetListProductDTO, ProductDTO, UpdateProductDTO } from "../dto/product";
 import z from "zod";
 import { MultipartFile } from "@fastify/multipart";
+import { PaginationResponse } from "../../pkg/rest/pagination";
 
 interface IProductService {
 
     getProduct(id: number) : Promise<ProductDTO | null>
 
-    getListProduct() : Promise<ProductDTO[]>
+    getListProduct(filter: GetListProductDTO) : Promise<{items: ProductDTO[], count: number}>
 
     createProduct(data: CreateProductDTO) : Promise<boolean>
 
     updateProduct(id: number, data: UpdateProductDTO) : Promise<boolean>
 
     deleteProduct(id: number) : Promise<boolean>
+
+    syncProducts() : Promise<boolean>
 }
 
 let productService: IProductService;
@@ -29,17 +32,22 @@ export default function ProductHandler(
     app.post("/product", CreateProduct)
     app.patch("/product/:product_id", UpdateProduct)
     app.delete("/product/:product_id", DeleteProduct)
+    app.post("/product/sync/dummy", SyncProducts)
 
     return app
 }
 
 async function GetListProduct(request: FastifyRequest, reply: FastifyReply) {
     try {
-        const products: ProductDTO[] = await productService.getListProduct()
+        const filter = request.query as GetListProductDTO
+        const {items, count}: {items: ProductDTO[], count: number} = await productService.getListProduct(filter)
 
         return reply.code(200).send({
             message: "products loaded",
-            body: products
+            body: {
+                items: items,
+                pagination: new PaginationResponse(count, Math.ceil(count/(filter.limit ?? 10)), Number(filter.page ?? 1), Number(filter.limit ?? 10))
+            }
         })
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
@@ -102,7 +110,6 @@ async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
         price: z.number("Price should be number"),
         description: z.string("Description should be string").min(1, "Title is required"),
         image: z.custom<MultipartFile>((file) => {
-            console.log(file)
             if (!file) return false;
 
             // Cek size
@@ -273,4 +280,17 @@ async function DeleteProduct(request: FastifyRequest, reply: FastifyReply) {
             body: null
         })
     }
+}
+
+
+async function SyncProducts(request: FastifyRequest, reply: FastifyReply) {
+    const result = await productService.syncProducts()
+    if (!result) {
+        throw new Error('something went wrong')
+    }
+
+    return reply.code(200).send({
+        message: "product sync success",
+        body: null
+    })
 }

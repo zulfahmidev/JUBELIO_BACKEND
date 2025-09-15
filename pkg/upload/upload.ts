@@ -2,6 +2,7 @@ import { MultipartFile } from "@fastify/multipart";
 import { randomUUID } from "crypto";
 import { createWriteStream, promises, WriteStream } from "fs";
 import path from "path";
+import { app } from "../../cmd/http";
 
 export default async function UploadFile(data: MultipartFile) : Promise<string | null> {
     if (data) {
@@ -12,7 +13,12 @@ export default async function UploadFile(data: MultipartFile) : Promise<string |
         await promises.mkdir(path.dirname(uploadPath), { recursive: true });
         await pumpStream(data.file, createWriteStream(uploadPath));
 
-        return `/${dir}/${filename}`
+        let host = ''
+        const address = app.server.address()
+        if (!(typeof address === "string" || address === null)) {
+          host = address.address === "::1" ? "http://127.0.0.1" : address.address
+        }
+        return `${host}/${dir}/${filename}`
     }
     return null
 }

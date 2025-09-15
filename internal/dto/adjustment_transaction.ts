@@ -8,6 +8,14 @@ export interface AdjustmentTransactionDTO {
     created_at: Date
 }
 
+export interface GetListAdjustmentTransactionDTO {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort?: "ASC" | "DESC";
+    order?: string;
+}
+
 export function toAdjustmentTransactionDTO(data: AdjustmentTransactionModel) : AdjustmentTransactionDTO {
     return {
         id: data.id,

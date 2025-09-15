@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto"
-import { CreateProductDTO, ProductDTO, toProductDTO, UpdateProductDTO } from "../dto/product"
+import { CreateProductDTO, GetListProductDTO, ProductDTO, toProductDTO, UpdateProductDTO } from "../dto/product"
 import ProductModel from "../model/product"
 import { Multipart } from "@fastify/multipart"
 import path from "path"
@@ -12,7 +12,7 @@ interface IProductRepository {
 
     findOneBySKU(sku: string) : Promise<ProductModel | null> 
 
-    findAll() : Promise<ProductModel[]> 
+    findAll(filter: GetListProductDTO) :  Promise<{ items: ProductModel[]; count: number }>
 
     create(data: CreateProductDTO) : Promise<ProductModel> 
 
@@ -22,12 +22,21 @@ interface IProductRepository {
 
 }
 
+interface IDummyOutbound {
+    getProducts() : Promise<CreateProductDTO[]>
+}
+
 export default class ProductService {
 
     private productRepository: IProductRepository
+    private dummyOutbound: IDummyOutbound
 
-    constructor(productRepository: IProductRepository) {
+    constructor(
+        productRepository: IProductRepository,
+        dummyOutbound: IDummyOutbound,
+    ) {
         this.productRepository = productRepository
+        this.dummyOutbound = dummyOutbound
     }
 
     async getProduct(id: number) : Promise<ProductDTO | null> {
@@ -42,10 +51,13 @@ export default class ProductService {
         return product ? toProductDTO(product) : null
     }
 
-    async getListProduct() : Promise<ProductDTO[]> {
-        const products: ProductModel[] = await this.productRepository.findAll()
+    async getListProduct(filter: GetListProductDTO) : Promise<{items: ProductDTO[], count: number}> {
+        const {items, count}:  { items: ProductModel[]; count: number } = await this.productRepository.findAll(filter)
 
-        return products.map(v => toProductDTO(v))
+        return {
+            items: items.map(v => toProductDTO(v)), 
+            count
+        }
     }
 
     async createProduct(data: CreateProductDTO) : Promise<boolean> {
@@ -96,6 +108,21 @@ export default class ProductService {
         const result = await this.productRepository.delete(id)
 
         return result == true
+    }
+
+    async syncProducts() : Promise<boolean> {
+
+        const products = await this.dummyOutbound.getProducts()
+
+        products.forEach(async data => {
+            data.title = data.title.toLowerCase()
+    
+            try {
+                const product: ProductModel = await this.productRepository.create(data)
+            } catch {}
+        })
+
+        return true
     }
 
 }
