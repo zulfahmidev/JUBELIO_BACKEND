@@ -207,7 +207,7 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
         }, {
             message: "File must be JPG/PNG and smaller than 2MB"
         }).optional()
-    }).safeParse(fileData ?? {})
+    }).safeParse(payload ?? {})
 
     if (!val.success) {
         return reply.code(400).send({
