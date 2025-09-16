@@ -1,14 +1,14 @@
 export class PaginationResponse {
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    itemsPerPage: number;
+    total_items: number;
+    total_pages: number;
+    current_page: number;
+    items_per_page: number;
 
     constructor(totalItems: number, totalPages: number, currentPage: number, itemsPerPage: number) {
-        this.totalItems = totalItems;
-        this.totalPages = totalPages;
-        this.currentPage = currentPage ?? 1;
-        this.itemsPerPage = itemsPerPage ?? 10;
+        this.total_items = totalItems;
+        this.total_pages = totalPages;
+        this.current_page = currentPage ?? 1;
+        this.items_per_page = itemsPerPage ?? 10;
     }
 }
 

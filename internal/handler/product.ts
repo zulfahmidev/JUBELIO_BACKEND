@@ -95,12 +95,21 @@ async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
         })
     }
 
+    let payload: any = {}
+    const parts = request.parts()
+
+    for await (const part of parts) {
+        if (part.type !== "file") {
+            payload[part.fieldname] = part.value
+        }
+    }
+
     const fileData = file.fields as Record<string, { value: string }>
-    const payload = {
-        sku: fileData.sku?.value,
-        title: fileData.title?.value,
-        price: Number(fileData.price?.value),
-        description: fileData.description?.value,
+    payload = {
+        sku: fileData.sku?.value ?? payload.sku,
+        title: fileData.title?.value ?? payload.title,
+        price: Number(fileData.price?.value) ?? Number(payload.price),
+        description: fileData.description?.value ?? payload.description,
         image: file
     }
 
@@ -166,31 +175,26 @@ async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
 async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
     const {product_id} = request.params as {product_id: number}
 
-    const product = await productService.getProduct(product_id)
-    if (!product) {
-        return reply.code(404).send({
-            message: "Product not found",
-            body: null
-        })
+    let payload: Record<string, any> = {};
+    let file: MultipartFile | undefined;
+
+    // Ambil semua parts (baik field text maupun file)
+    const parts = request.parts();
+
+    for await (const part of parts) {
+        if (part.type === "file") {
+            file = part; // simpan file
+        } else {
+            payload[part.fieldname] = part.value; // simpan text field
+        }
     }
 
-    const file: MultipartFile | undefined = await request.file()
-
-    if (!file) {
-        return reply.code(500).send({
-            message: "something went wrong",
-            body: null
-        })
-    }
-
-    const fileData = file.fields as Record<string, { value: string }>
-    const payload = {
-        sku: fileData.sku?.value,
-        title: fileData.title?.value,
-        price: Number(fileData.price?.value),
-        description: fileData.description?.value,
+    // Pastikan type conversion sesuai
+    payload = {
+        ...payload,
+        price: payload.price ? Number(payload.price) : undefined,
         image: file
-    }
+    };
 
     const val = z.object({
         title: z.string("Title should be string").min(1, "Title is required").optional(),
@@ -198,16 +202,16 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
         price: z.number("Price should be number").optional(),
         description: z.string("Description should be string").min(1, "Title is required").optional(),
         image: z.custom<MultipartFile>((file) => {
-            if (!file) return false;
+            // Kalau tidak ada file, biarkan lolos
+            if (!file) return true;
 
-            // Cek size
+            // Kalau ada file, validasi
             if (file.file.bytesRead > 2 * 1024 * 1024) {
-            return false;
+                return false;
             }
 
-            // Cek mimetype
             if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
-            return false;
+                return false;
             }
 
             return true;

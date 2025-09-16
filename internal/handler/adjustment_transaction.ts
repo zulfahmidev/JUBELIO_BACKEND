@@ -90,7 +90,7 @@ async function GetAdjustmentTransaction(request: FastifyRequest, reply: FastifyR
 
 async function CreateAdjustmentTransaction(request: FastifyRequest, reply: FastifyReply) {
     const val = z.object({
-        sku: z.string("SKU should be string").min(1, "Title is required"),
+        sku: z.string("SKU should be string").min(1, "SKU is required"),
         qty: z.number("Price should be number"),
         amount: z.number("Price should be number"),
     }).safeParse(request.body ?? {})

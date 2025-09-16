@@ -16,7 +16,7 @@ export default async function UploadFile(data: MultipartFile) : Promise<string |
         let host = ''
         const address = app.server.address()
         if (!(typeof address === "string" || address === null)) {
-          host = address.address === "::1" ? "http://127.0.0.1" : address.address
+          host = address.address === "::1" ? `http://127.0.0.1:${process.env.PORT}` : address.address
         }
         return `${host}/${dir}/${filename}`
     }

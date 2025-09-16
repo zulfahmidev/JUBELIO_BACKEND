@@ -84,12 +84,6 @@ export default class ProductService {
     async updateProduct(id: number, data: UpdateProductDTO) : Promise<boolean> {
         data.title = data.title?.toLowerCase()
 
-        if (data.sku) {
-            if (await this.productRepository.findOneBySKU(data.sku) != null) {
-                throw new Error("SKU already exists")
-            }
-        }
-
         if (data.file_image) {
             const image = await UploadFile(data.file_image)
             if (!image) {
