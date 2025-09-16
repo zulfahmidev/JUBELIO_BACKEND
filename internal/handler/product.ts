@@ -121,12 +121,10 @@ async function CreateProduct(request: FastifyRequest, reply: FastifyReply) {
         image: z.custom<MultipartFile>((file) => {
             if (!file) return false;
 
-            // Cek size
             if (file.file.bytesRead > 2 * 1024 * 1024) {
                 return false;
             }
 
-            // Cek mimetype
             if (!["image/jpeg", "image/png"].includes(file.mimetype)) {
                 return false;
             }
@@ -178,18 +176,16 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
     let payload: Record<string, any> = {};
     let file: MultipartFile | undefined;
 
-    // Ambil semua parts (baik field text maupun file)
     const parts = request.parts();
 
     for await (const part of parts) {
         if (part.type === "file") {
-            file = part; // simpan file
+            file = part;
         } else {
-            payload[part.fieldname] = part.value; // simpan text field
+            payload[part.fieldname] = part.value;
         }
     }
 
-    // Pastikan type conversion sesuai
     payload = {
         ...payload,
         price: payload.price ? Number(payload.price) : undefined,
@@ -202,10 +198,8 @@ async function UpdateProduct(request: FastifyRequest, reply: FastifyReply) {
         price: z.number("Price should be number").optional(),
         description: z.string("Description should be string").min(1, "Title is required").optional(),
         image: z.custom<MultipartFile>((file) => {
-            // Kalau tidak ada file, biarkan lolos
             if (!file) return true;
 
-            // Kalau ada file, validasi
             if (file.file.bytesRead > 2 * 1024 * 1024) {
                 return false;
             }
