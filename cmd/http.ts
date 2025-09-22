@@ -23,15 +23,18 @@ const start = async () => {
       root: path.join(__dirname, "../public"),
       prefix: "/",
     });
+
+    if (process.env.NODE_ENV !== "production") {
+      dotenv.config();
+    }
     
-    dotenv.config();
     connectDB(app)
     InitDependencies(app)
 
     const PORT = Number(process.env.PORT) ?? 8080
     
     try {
-        await app.listen({ port: PORT })
+        await app.listen({ port: PORT, host: "0.0.0.0" })
     } catch (err) {
         app.log.error(err)
         process.exit(1)
